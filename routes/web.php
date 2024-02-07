@@ -41,34 +41,5 @@ Route::get('/dashboard', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->prefix('/todo')->group(function () {
-
-    Route::post('/', function (Request $request) {
-        $item = $request->string('item')->trim();
-        /** @var Todo $todo */
-        $todo = Todo::create(['item' => $item]);
-
-        return Redirect::route('dashboard');
-    })->name('todo.create');
-
-    Route::delete('/', function (Request $request) {
-        $id = $request->integer('id');
-        /** @var Todo $todo */
-        $todo = Todo::findOrFail($id);
-        $todo->delete();
-
-        return Redirect::route('dashboard');
-    })->name('todo.delete');
-
-    Route::put('/', function (Request $request) {
-        $id = $request->integer('id');
-        /** @var Todo $todo */
-        $todo = Todo::findOrFail($id);
-        $todo->completed = !$todo->completed;
-        $todo->save();
-
-        return Redirect::route('dashboard');
-    })->name('todo.toggle_completed');
-});
 
 require __DIR__.'/auth.php';
