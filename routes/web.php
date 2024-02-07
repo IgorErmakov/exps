@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Models\Todo;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -25,14 +28,47 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::get('/dashboard', function () {
+    $todoItems = Todo::all();
+    return Inertia::render('Dashboard', [
+        'todoItems' => $todoItems,
+    ]);
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->prefix('/todo')->group(function () {
+
+    Route::post('/', function (Request $request) {
+        $item = $request->string('item')->trim();
+        /** @var Todo $todo */
+        $todo = Todo::create(['item' => $item]);
+
+        return Redirect::route('dashboard');
+    })->name('todo.create');
+
+    Route::delete('/', function (Request $request) {
+        $id = $request->integer('id');
+        /** @var Todo $todo */
+        $todo = Todo::findOrFail($id);
+        $todo->delete();
+
+        return Redirect::route('dashboard');
+    })->name('todo.delete');
+
+    Route::put('/', function (Request $request) {
+        $id = $request->integer('id');
+        /** @var Todo $todo */
+        $todo = Todo::findOrFail($id);
+        $todo->completed = !$todo->completed;
+        $todo->save();
+
+        return Redirect::route('dashboard');
+    })->name('todo.toggle_completed');
 });
 
 require __DIR__.'/auth.php';
